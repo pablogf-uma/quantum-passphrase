@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Random Bit Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        h3 {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        label {
+            font-size: 14px;
+            color: #333;
+            display: block;
+            margin-bottom: 8px;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Generate a Quantum Passphrase!</h1>
+        <br>
+        <form id="generate-form" action="/generate-random-bits" method="post">
+            <label for="n_qubits">How many qubits do you want to use?</label>
+            <input type="number" id="n_qubits" name="n_qubits" min="1" max="50" required>
+            <button type="submit">Generate Random Bits</button>
+        </form>  
+            <br>
+            <br>
+            <br>
+        <form id="generate-form" action="/generate-passphrase" method="post">
+
+            <label for="n_words">How many words in the passphrase?</label>
+            <input type="number" id="n_words" name="n_words" min="1" max="100" required>
+            <button type="submit">Generate Passphrase</button>
+        </form>  
+        
+        <div class="footer">
+            By Pablo Gutiérrez
+        </div>
+    </div>
+</body>
+</html>

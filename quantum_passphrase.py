@@ -1,15 +1,14 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template, request, session
 from braket.circuits import Circuit
 from braket.devices import LocalSimulator
 import requests
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Secret key allows for session between both endpoints
 
-# Storage for the bitstring to use between endpoints
-cached_bitstring = None
 
 # Generate random bits from a quantum circuit
-def generate_random_bits(n_qubits = 20):
+def generate_random_bits(n_qubits=20):
     qc = Circuit().h(range(n_qubits))
     device = LocalSimulator()
     result = device.run(qc, shots=1).result()
@@ -21,7 +20,7 @@ def bits_to_index(bitstring):
     bitstring_int = int(''.join(map(str, bitstring)), 2)
     return bitstring_int
 
-# Use this index to search a word in Datamuse API
+# Use index to search a word in Datamuse API
 DATAMUSE_API = "https://api.datamuse.com/words"
 def get_100_words():
     parameters = {'rel_jja': 'common', 'max': 100}
@@ -32,42 +31,60 @@ def get_100_words():
     else:
         raise Exception("Error retrieving data from Datamuse API")
 
-@app.route('/generate-random-bits', methods=['GET'])
-def generate_random_bits_endpoint():
-    global cached_bitstring
-    try:
-        # Generate random bits from a quantum circuit
-        cached_bitstring = generate_random_bits()
-        
-        # Return the result
-        return jsonify({
-            "random_bits": ''.join(map(str, cached_bitstring)),
-        })
 
+@app.route('/')
+def index():
+    # Retrieve the html form
+    return render_template('index.html')
+
+@app.route('/generate-random-bits', methods=['POST'])
+def generate_random_bits_endpoint():
+    try:
+        # Retrieve the number of qubits specified by the user
+        n_qubits = int(request.form['n_qubits'])
+
+        # Generate random bits from a quantum circuit
+        bitstring = generate_random_bits(n_qubits)
+        session['cached_bitstring'] = bitstring  # Store the bitstring in the session
+
+        # Get the word list and store it in the session
+        words = get_100_words()
+        session['words'] = words
+        
+        return jsonify({
+            "random_bits": ''.join(map(str, bitstring))
+        })
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-@app.route('/generate-passphrase', methods=['GET'])
+
+@app.route('/generate-passphrase', methods=['POST'])
 def generate_passphrase():
-    global cached_bitstring
     try:
-            # Convertbitstring to index
-            index = bits_to_index(cached_bitstring)
-            
-            # Get the word list and select a word based on the index
-            words = get_100_words()
-            selected_word = words[index % len(words)]  # Ensure the index is within bounds
-            
-            # Create a passprhase from that selected word and the next 9
-            passphrase = [selected_word]
+        # Retrieve number of words specified by the user
+        n_words = int(request.form['n_words'])
 
-            for i in range(1,10):
-                passphrase.append(words[(index + i) % len(words)])
+        # Retrieve the cached bitstring from the session
+        bitstring = session.get('cached_bitstring')
+        if bitstring is None:
+            return jsonify({"error": "No bitstring found. Please generate random bits first."}), 400
 
-            # Return the result as a JSON response
-            return jsonify({
-                'passphrase': '-'.join(map(str, passphrase))
-            })
+        # Convert bitstring to index
+        index = bits_to_index(bitstring)
+        
+        # Get the word list and select a word based on the index
+        words = session.get('words')
+        selected_word = words[index % len(words)]  # Ensure the index is within bounds
+        
+        # Create a passphrase from that selected word and the next `n_words`
+        passphrase = [selected_word]
+        for i in range(1, n_words):
+            passphrase.append(words[(index + i) % len(words)])
+
+        return jsonify({
+            'passphrase': '-'.join(passphrase)
+        })
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
